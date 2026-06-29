@@ -1,4 +1,8 @@
 import 'package:go_router/go_router.dart';
+import '../../features/home/screens/home_screen.dart';
+import '../../features/player/screens/player_screen.dart';
+import '../../features/about/screens/about_screen.dart';
+import '../../features/settings/screens/settings_screen.dart';
 
 /// Application Router Configuration
 final appRouter = GoRouter(
@@ -7,17 +11,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/',
       name: 'home',
-      builder: (context, state) {
-        // TODO: Implement Home Screen
-        return const Placeholder();
-      },
+      builder: (context, state) => const HomeScreen(),
       routes: [
         GoRoute(
           path: 'player/:surahId',
           name: 'player',
           builder: (context, state) {
-            // TODO: Implement Player Screen
-            return const Placeholder();
+            final surahId = state.pathParameters['surahId'] ?? '1';
+            return PlayerScreen(surahId: surahId);
           },
         ),
       ],
@@ -25,18 +26,12 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/about',
       name: 'about',
-      builder: (context, state) {
-        // TODO: Implement About Screen
-        return const Placeholder();
-      },
+      builder: (context, state) => const AboutScreen(),
     ),
     GoRoute(
       path: '/settings',
       name: 'settings',
-      builder: (context, state) {
-        // TODO: Implement Settings Screen
-        return const Placeholder();
-      },
+      builder: (context, state) => const SettingsScreen(),
     ),
   ],
 );
