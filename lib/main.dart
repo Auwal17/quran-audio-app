@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quran_recitation/core/theme/app_theme.dart';
-import 'package:quran_recitation/core/router/app_router.dart';
+import 'package:go_router/go_router.dart';
+import 'core/theme/app_theme.dart';
+import 'core/router/app_router.dart';
 import 'core/providers/theme_provider.dart';
+import 'features/shell/screens/shell_screen.dart';
+import 'features/home/screens/home_screen.dart';
+import 'features/about/screens/about_screen.dart';
+import 'features/settings/screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
