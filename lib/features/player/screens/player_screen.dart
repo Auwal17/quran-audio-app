@@ -4,7 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/surah_provider.dart';
+import '../../../core/providers/player_provider.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/extensions/build_context_extensions.dart';
+import '../../../widgets/player_controls.dart';
+import '../../../widgets/progress_slider.dart';
+import '../../../widgets/playback_speed_selector.dart';
 
 /// Player Screen - Displays audio player for a Surah
 class PlayerScreen extends ConsumerStatefulWidget {
@@ -21,6 +26,13 @@ class PlayerScreen extends ConsumerStatefulWidget {
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
+  void initState() {
+    super.initState();
+    final surahNumber = int.tryParse(widget.surahId) ?? 1;
+    ref.read(playerStateProvider.notifier).setCurrentSurah(surahNumber);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.lightBackground;
@@ -29,6 +41,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     final surahNumber = int.tryParse(widget.surahId) ?? 1;
+    final playerState = ref.watch(playerStateProvider);
+    final currentSpeed = ref.watch(currentPlaybackSpeedProvider);
+    final speeds = ref.watch(playbackSpeedsProvider);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -68,7 +83,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 ),
               )
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -76,6 +91,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     Container(
                       width: 200,
                       height: 200,
+                      margin: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -104,7 +120,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
                     // Surah Name (Arabic)
                     Text(
                       surah.arabicName,
@@ -123,7 +138,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     // Surah Info
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -153,48 +168,84 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     // Teacher Name
                     Text(
-                      'Recited by Sheikh [Teacher\'s Name]',
+                      'Recited by ${AppConstants.teacherName}',
                       style: AppTypography.bodyMedium.copyWith(
                         color: secondaryTextColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 40),
-                    // PLACEHOLDER: Player Controls (will be in Phase 2B)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Player Controls Coming in Phase 2B',
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.emeraldGreen,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Icon(
-                            Icons.music_note,
-                            size: 48,
-                            color: AppColors.emeraldGreen.withOpacity(0.3),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 32),
+                    // Progress Slider
+                    ProgressSlider(
+                      currentPosition: playerState.currentPosition,
+                      duration: playerState.duration,
+                      onPositionChanged: (newPosition) {
+                        ref
+                            .read(playerStateProvider.notifier)
+                            .setCurrentPosition(newPosition);
+                      },
+                      isDark: isDark,
                     ),
+                    const SizedBox(height: 32),
+                    // Player Controls
+                    PlayerControls(
+                      isPlaying: playerState.isPlaying,
+                      onPlayPause: () {
+                        ref
+                            .read(playerStateProvider.notifier)
+                            .setPlaying(!playerState.isPlaying);
+                      },
+                      onStop: () {
+                        ref.read(playerStateProvider.notifier).reset();
+                      },
+                      onPrevious: () {
+                        // TODO: Implement previous surah
+                      },
+                      onNext: () {
+                        // TODO: Implement next surah
+                      },
+                      onSkipBack: () {
+                        final newPosition = playerState.currentPosition -
+                            AppConstants.skipDuration;
+                        ref
+                            .read(playerStateProvider.notifier)
+                            .setCurrentPosition(
+                              newPosition.isNegative
+                                  ? Duration.zero
+                                  : newPosition,
+                            );
+                      },
+                      onSkipForward: () {
+                        final newPosition = playerState.currentPosition +
+                            AppConstants.skipDuration;
+                        ref
+                            .read(playerStateProvider.notifier)
+                            .setCurrentPosition(
+                              newPosition > playerState.duration
+                                  ? playerState.duration
+                                  : newPosition,
+                            );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    // Playback Speed Selector
+                    PlaybackSpeedSelector(
+                      speeds: speeds,
+                      currentSpeed: currentSpeed,
+                      onSpeedChanged: (speed) {
+                        ref
+                            .read(currentPlaybackSpeedProvider.notifier)
+                            .state = speed;
+                        ref
+                            .read(playerStateProvider.notifier)
+                            .setPlaybackSpeed(speed);
+                      },
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
